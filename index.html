@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>情報ネットワーク中間試験 対策100問</title>
+    <style>
+        :root { --primary-color: #4a90e2; --success-color: #2ecc71; --error-color: #e74c3c; }
+        body { font-family: sans-serif; background-color: #f4f7f6; padding: 20px; display: flex; justify-content: center; }
+        .quiz-container { background: white; border-radius: 16px; padding: 30px; width: 100%; max-width: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .option-btn { display: block; width: 100%; margin: 8px 0; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; cursor: pointer; text-align: left; }
+        .option-btn:hover:not([disabled]) { border-color: var(--primary-color); background: #f0f7ff; }
+        .correct { background: #e8f5e9 !important; border-color: var(--success-color) !important; color: #2e7d32; }
+        .wrong { background: #ffebee !important; border-color: var(--error-color) !important; color: #c62828; }
+        .next-btn { width: 100%; padding: 15px; background: var(--primary-color); color: white; border: none; border-radius: 8px; margin-top: 20px; display: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="quiz-container">
+    <div id="progress">問題 1/100</div>
+    <div id="question" style="font-size: 1.2rem; font-weight: bold; margin: 20px 0;">読み込み中...</div>
+    <div id="options"></div>
+    <div id="feedback" style="margin-top: 15px; font-weight: bold;"></div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">次の問題へ</button>
+</div>
+
+<script>
+const quizData = [
+    { q: "通信相手と物理的に回線を占有して接続する方式は？", options: ["パケット交換方式", "回線交換方式", "蓄積交換方式", "メッセージ交換方式"], a: "回線交換方式" },
+    { q: "データを小さな単位に分割して宛先へ送る方式は？", options: ["パケット交換方式", "回線交換方式", "ブロードキャスト方式", "マルチキャスト方式"], a: "パケット交換方式" },
+    { q: "ネットワークの幾何学的な構成形態を指す言葉は？", options: ["プロトコル", "トポロジー", "ルーティング", "アーキテクチャ"], a: "トポロジー" },
+    { q: "OSI参照モデルは何階層で構成されているか？", options: ["3階層", "4階層", "5階層", "7階層"], a: "7階層" },
+    { q: "TCP/IPモデルの階層数は一般的にいくつか？", options: ["3階層", "4階層", "5階層", "7階層"], a: "4階層" },
+    { q: "送信データに上位層のヘッダを付加していくプロセスは？", options: ["カプセル化", "フラグメンテーション", "多重化", "ルーティング"], a: "カプセル化" },
+    { q: "IPアドレスをMACアドレスに解決するためのプロトコルは？", options: ["ICMP", "ARP", "DNS", "DHCP"], a: "ARP" },
+    { q: "TCPのコネクション確立時に行われる3回のやり取りは？", options: ["3方向ハンドシェイク", "スロースタート", "輻輳制御", "フロー制御"], a: "3方向ハンドシェイク" },
+    { q: "IPアドレスを自動的に端末へ割り当てるプロトコルは？", options: ["DNS", "DHCP", "RIP", "OSPF"], a: "DHCP" },
+    { q: "音声通信でパケット到着のゆらぎによる劣化を何と呼ぶか？", options: ["輻輳", "ジッタ", "パケットロス", "遅延"], a: "ジッタ" },
+    { q: "イーサネット環境でループを検知・ブロックするプロトコルは？", options: ["ARP", "STP", "DHCP", "DNS"], a: "STP" },
+    { q: "ネットワーク間を接続し、経路を選択する機器は？", options: ["スイッチングハブ", "ルータ", "ゲートウェイ", "スプリッタ"], a: "ルータ" },
+    { q: "SDNの代表的なプロトコルは？", options: ["OpenFlow", "VLAN", "VPN", "BGP"], a: "OpenFlow" },
+    { q: "AS間で経路情報を交換するプロトコルは？", options: ["BGP", "RIP", "OSPF", "ARP"], a: "BGP" },
+    { q: "HTTPやSMTPが含まれる層は？", options: ["アプリケーション層", "トランスポート層", "インターネット層", "物理層"], a: "アプリケーション層" },
+    { q: "宛先IPアドレスに基づいて転送経路を決定することを何というか？", options: ["スイッチング", "ルーティング", "フロー制御", "カプセル化"], a: "ルーティング" },
+    { q: "IPv6アドレスは何ビットか？", options: ["32ビット", "64ビット", "128ビット", "256ビット"], a: "128ビット" },
+    { q: "MACアドレスは何ビットか？", options: ["32ビット", "48ビット", "64ビット", "128ビット"], a: "48ビット" },
+    { q: "UDPの特徴はどれか？", options: ["信頼性保証あり", "コネクション型", "リアルタイム性重視", "順序制御あり"], a: "リアルタイム性重視" },
+    { q: "VLANの目的は？", options: ["物理的接続の簡略化", "ブロードキャストドメインの分割", "転送速度の向上", "暗号化の強化"], a: "ブロードキャストドメインの分割" },
+    { q: "ポート番号80番を使用するプロトコルは？", options: ["HTTPS", "SMTP", "HTTP", "FTP"], a: "HTTP" },
+    { q: "ネットワーク層の主なプロトコルは？", options: ["TCP", "UDP", "IP", "HTTP"], a: "IP" },
+    { q: "トランスポート層の主なプロトコルは？", options: ["IP", "Ethernet", "TCP", "DNS"], a: "TCP" },
+    { q: "DNSの役割は？", options: ["IPの自動割り当て", "ホスト名とIPの相互変換", "MACアドレス変換", "経路情報の交換"], a: "ホスト名とIPの相互変換" },
+    { q: "回線交換方式の主な用途は？", options: ["Web閲覧", "従来の電話", "メール送信", "ファイル転送"], a: "従来の電話" },
+    { q: "OSI参照モデルの第1層は？", options: ["データリンク層", "物理層", "ネットワーク層", "セッション層"], a: "物理層" },
+    { q: "OSI参照モデルの第2層は？", options: ["データリンク層", "物理層", "ネットワーク層", "トランスポート層"], a: "データリンク層" },
+    { q: "OSI参照モデルの第3層は？", options: ["データリンク層", "ネットワーク層", "トランスポート層", "アプリケーション層"], a: "ネットワーク層" },
+    { q: "OSI参照モデルの第4層は？", options: ["ネットワーク層", "トランスポート層", "セッション層", "プレゼンテーション層"], a: "トランスポート層" },
+    { q: "TCPでパケットロスを検知する仕組みは？", options: ["確認応答(ACK)", "3方向ハンドシェイク", "スライディングウィンドウ", "チェックサム"], a: "確認応答(ACK)" },
+    { q: "Webサーバ等への負荷分散を行う装置は？", options: ["ルータ", "L2スイッチ", "ロードバランサ", "ファイアウォール"], a: "ロードバランサ" },
+    { q: "VPN構築のために使われる技術は？", options: ["IPsec", "STP", "OSPF", "ARP"], a: "IPsec" },
+    { q: "無線LAN(Wi-Fi)の規格は？", options: ["IEEE 802.3", "IEEE 802.11", "IEEE 802.1Q", "IEEE 802.1w"], a: "IEEE 802.11" },
+    { q: "イーサネットの標準規格は？", options: ["IEEE 802.3", "IEEE 802.11", "IEEE 802.15", "IEEE 802.16"], a: "IEEE 802.3" },
+    { q: "IPパケットのヘッダにあるTTLの役割は？", options: ["再送制御", "順序制御", "パケットの生存期間制御", "宛先指定"], a: "パケットの生存期間制御" },
+    { q: "ホップ数で経路を決定するプロトコルは？", options: ["OSPF", "RIP", "BGP", "ARP"], a: "RIP" },
+    { q: "リンクステート型ルーティングプロトコルは？", options: ["RIP", "BGP", "OSPF", "ARP"], a: "OSPF" },
+    { q: "物理的な接続を論理的に切り分ける技術は？", options: ["VLAN", "VPN", "NAT", "Proxy"], a: "VLAN" },
+    { q: "プライベートIPアドレス範囲は？", options: ["127.0.0.1", "10.0.0.0/8", "8.8.8.8", "1.1.1.1"], a: "10.0.0.0/8" },
+    { q: "IP電話で音声を運ぶプロトコルは？", options: ["SIP", "RTP", "ICMP", "TCP"], a: "RTP" },
+    { q: "SIPの主な役割は？", options: ["音声伝送", "呼制御", "ルーティング", "エラー訂正"], a: "呼制御" },
+    { q: "通信路の帯域幅を複数で共有する方式は？", options: ["回線交換", "パケット交換", "メッセージ交換", "蓄積交換"], a: "パケット交換" },
+    { q: "ARPによって変換されるものは？", options: ["IPとドメイン名", "IPとMACアドレス", "ホスト名とMACアドレス", "URLとIP"], a: "IPとMACアドレス" },
+    { q: "TCPで送信量を制御するアルゴリズムは？", options: ["AIMD", "RIP", "STP", "ARP"], a: "AIMD" },
+    { q: "ネットワークを集中制御する考え方は？", options: ["分散制御", "集中制御(SDN)", "自律制御", "マルチキャスト"], a: "集中制御(SDN)" },
+    { q: "ドメイン名の階層を管理するシステムは？", options: ["DNS", "DHCP", "ARP", "ICMP"], a: "DNS" },
+    { q: "メール送信に使われるプロトコルは？", options: ["SMTP", "POP3", "IMAP", "HTTP"], a: "SMTP" },
+    { q: "暗号化されたWeb通信は？", options: ["HTTP", "FTP", "HTTPS", "Telnet"], a: "HTTPS" },
+    { q: "ループ回避に用いるRSTPの標準は？", options: ["IEEE 802.1w", "IEEE 802.11", "IEEE 802.3", "IEEE 802.1Q"], a: "IEEE 802.1w" },
+    { q: "データ転送で確認応答を行わないプロトコルは？", options: ["TCP", "UDP", "HTTP", "SMTP"], a: "UDP" },
+    { q: "ルーティングテーブルを更新する手続きは？", options: ["ルーティングプロトコル", "スイッチング", "ARP", "カプセル化"], a: "ルーティングプロトコル" },
+    { q: "通信の信頼性を保証するための階層は？", options: ["物理層", "ネットワーク層", "トランスポート層", "データリンク層"], a: "トランスポート層" },
+    { q: "物理層で接続する主な機器は？", options: ["ルータ", "ハブ", "スイッチ", "PC"], a: "ハブ" },
+    { q: "AS番号は何ビットで管理されるようになったか？", options: ["16bit", "32bit", "64bit", "128bit"], a: "32bit" },
+    { q: "IPv4アドレスは何ビットか？", options: ["16bit", "32bit", "64bit", "128bit"], a: "32bit" },
+    { q: "データセンター内のネットワーク構成で用いられる技術は？", options: ["VLAN", "STP", "ARP", "RIP"], a: "VLAN" },
+    { q: "ルータの経路表で宛先となるのは？", options: ["MACアドレス", "IPアドレス", "ドメイン名", "ポート番号"], a: "IPアドレス" },
+    { q: "ICMPの主な役割は？", options: ["エラー通知・制御", "IP割り当て", "経路制御", "音声伝送"], a: "エラー通知・制御" },
+    { q: "無線LANでのランダムアクセス制御は？", options: ["CSMA/CD", "CSMA/CA", "Token Ring", "ARP"], a: "CSMA/CA" },
+    { q: "有線LAN(イーサネット)での衝突検出方式は？", options: ["CSMA/CD", "CSMA/CA", "Token Ring", "ARP"], a: "CSMA/CD" },
+    { q: "TCPでウィンドウサイズを小さくするとどうなる？", options: ["転送量が増える", "転送量が減る", "パケットロスが増える", "エラーが増える"], a: "転送量が減る" },
+    { q: "OSIモデルとTCP/IPモデルで対応していない層がある理由は？", options: ["策定時期の違い", "通信機器の違い", "開発元の違い", "全て"], a: "全て" },
+    { q: "メッシュ形トポロジーの強みは？", options: ["経済性", "故障耐性", "配線の簡潔さ", "安価"], a: "故障耐性" },
+    { q: "スター形トポロジーの弱みは？", options: ["中央ノードの故障に弱い", "配線が複雑", "拡張が困難", "速度が遅い"], a: "中央ノードの故障に弱い" },
+    { q: "ループが発生した場合のイーサネットでの対策は？", options: ["STP", "VLAN", "RIP", "BGP"], a: "STP" },
+    { q: "TCPで輻輳を検知してウィンドウを減らすアルゴリズムは？", options: ["AIMD", "RIP", "OSPF", "ARP"], a: "AIMD" },
+    { q: "MPLSのラベルは何に利用されるか？", options: ["VPN識別", "MAC変換", "ホスト名管理", "メール配送"], a: "VPN識別" },
+    { q: "光ファイバ網で多数の点を接続するネットワーク技術は？", options: ["フォトニックネットワーク", "Ethernet", "VLAN", "VPN"], a: "フォトニックネットワーク" },
+    { q: "SIPサーバの役割は？", options: ["IPアドレスとSIP URIの対応管理", "音声の符号化", "エラー訂正", "暗号化"], a: "IPアドレスとSIP URIの対応管理" },
+    { q: "IP電話のアダプタで使用するコネクタは？", options: ["RJ11", "RJ45", "同軸", "光"], a: "RJ11" },
+    { q: "DHCP要求(Discover)の通信手法は？", options: ["ユニキャスト", "ブロードキャスト", "マルチキャスト", "エニーキャスト"], a: "ブロードキャスト" },
+    { q: "DNSの正引きとは？", options: ["ホスト名からIPへの変換", "IPからホスト名への変換", "MACからIPへの変換", "IPからMACへの変換"], a: "ホスト名からIPへの変換" },
+    { q: "ルータの役割は？", options: ["LAN間接続", "データ暗号化", "物理配線", "音声符号化"], a: "LAN間接続" },
+    { q: "パケット交換方式の利点は？", options: ["回線占有", "帯域の有効利用", "常に高品質", "固定電話"], a: "帯域の有効利用" },
+    { q: "階層化構造の利点は？", options: ["機能の独立性", "高速化", "小型化", "安価"], a: "機能の独立性" },
+    { q: "ネットワークの論理的な塊を指す用語は？", options: ["AS(自律システム)", "VLAN", "VPN", "Ethernet"], a: "AS(自律システム)" },
+    { q: "IGPとEGPの使い分けは？", options: ["AS内部とAS間", "LANとWAN", "有線と無線", "IPとMAC"], a: "AS内部とAS間" },
+    { q: "TLS/SSLの役割は？", options: ["暗号化通信", "経路管理", "IP割り当て", "呼制御"], a: "暗号化通信" },
+    { q: "DHCPで設定される情報は？", options: ["IPアドレス", "ゲートウェイ", "DNSサーバ", "全て"], a: "全て" },
+    { q: "IP通信での配達人の役割を担う層は？", options: ["インターネット層", "物理層", "トランスポート層", "アプリケーション層"], a: "インターネット層" },
+    { q: "TCPでパケットを順序通りに組み立てる要素は？", options: ["シーケンス番号", "ACK番号", "ポート番号", "TTL"], a: "シーケンス番号" },
+    { q: "BGPで使用されるポート番号は？", options: ["80", "179", "53", "67"], a: "179" },
+    { q: "OSIモデルの第7層は？", options: ["プレゼンテーション層", "アプリケーション層", "セッション層", "トランスポート層"], a: "アプリケーション層" },
+    { q: "ネットワーク層より上の層は？", options: ["データリンク層", "トランスポート層", "物理層", "MAC層"], a: "トランスポート層" },
+    { q: "データリンク層より下の層は？", options: ["物理層", "ネットワーク層", "トランスポート層", "アプリケーション層"], a: "物理層" },
+    { q: "IPアドレス枯渇対策技術は？", options: ["IPv6", "VLAN", "VPN", "ARP"], a: "IPv6" },
+    { q: "ネットワークの仮想化技術は何の発展と関連しているか？", options: ["サーバ仮想化", "無線LAN", "ルータ", "ケーブル"], a: "サーバ仮想化" },
+    { q: "ルータが持つ経路情報を記した表は？", options: ["経路表(ルーティングテーブル)", "VLAN表", "ARP表", "MACアドレステーブル"], a: "経路表(ルーティングテーブル)" },
+    { q: "IP通信の信頼性を保証するのは？", options: ["TCP", "UDP", "ARP", "IP"], a: "TCP" },
+    { q: "データセンター内の負荷分散を行う技術は？", options: ["ロードバランシング", "ルーティング", "カプセル化", "ARP"], a: "ロードバランシング" },
+    { q: "IPsecの主な用途は？", options: ["VPN", "DNS", "DHCP", "STP"], a: "VPN" },
+    { q: "ホップ数の上限があるプロトコルは？", options: ["RIP", "OSPF", "BGP", "ARP"], a: "RIP" },
+    { q: "ネットワーク管理パケット数が増加するプロトコルは？", options: ["RIP", "OSPF", "BGP", "ARP"], a: "RIP" },
+    { q: "AS内の経路制御は？", options: ["IGP", "EGP", "BGP", "DNS"], a: "IGP" },
+    { q: "AS間の経路制御は？", options: ["EGP", "IGP", "RIP", "ARP"], a: "EGP" },
+    { q: "TCPで受信側のウィンドウサイズ通知は何に含まれるか？", options: ["ACKパケット", "SYNパケット", "FINパケット", "データパケット"], a: "ACKパケット" },
+    { q: "RTPの制御プロトコルは？", options: ["RTCP", "SIP", "TCP", "DNS"], a: "RTCP" },
+    { q: "音声品質劣化の原因は？", options: ["遅延", "ジッタ", "パケット損失", "全て"], a: "全て" },
+    { q: "Webブラウザで有名なNCSA開発のソフトは？", options: ["Mosaic", "Chrome", "Firefox", "IE"], a: "Mosaic" },
+    { q: "NGN(次世代ネットワーク)の定義は？", options: ["パケットベース", "広帯域・QoS制御", "全て", "回線交換専用"], a: "全て" }
+];
+
+// 100問のデータを簡潔に生成・管理するためのロジック
+// (実際のファイルには、ここに全100問を記述した配列を入れてください)
+
+let idx = 0, score = 0;
+function show() {
+    const d = quizData[idx];
+    document.getElementById("progress").innerText = `問題 ${idx + 1}/${quizData.length}`;
+    document.getElementById("question").innerText = d.q;
+    const optDiv = document.getElementById("options");
+    optDiv.innerHTML = "";
+    d.options.forEach(o => {
+        const b = document.createElement("button");
+        b.className = "option-btn";
+        b.innerText = o;
+        b.onclick = () => {
+            document.querySelectorAll(".option-btn").forEach(btn => btn.disabled = true);
+            if (o === d.a) { b.classList.add("correct"); score++; document.getElementById("feedback").innerText = "正解！"; }
+            else { b.classList.add("wrong"); document.getElementById("feedback").innerText = "正解は " + d.a; }
+            document.getElementById("next-btn").style.display = "block";
+        };
+        optDiv.appendChild(b);
+    });
+}
+function nextQuestion() { idx++; idx < quizData.length ? show() : alert("終了！スコア: " + score); }
+show();
+</script>
+</body>
+</html>
